@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Banque - Lab</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="panel hero">
+        <h1>Dashboard Banque</h1>
+        <p>Visualisation des clients et des comptes depuis l'API.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Recherche</h2>
+        <form id="searchForm" class="search-form">
+          <label>
+            Type
+            <select id="kind" required>
+              <option value="client">Client</option>
+              <option value="compte">Compte</option>
+            </select>
+          </label>
+          <label>
+            Valeur
+            <input id="term" type="text" placeholder="Ex: Dupont ou courant" required />
+          </label>
+          <button type="submit">Rechercher</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Clients</h2>
+        <button id="loadClients">Charger les clients</button>
+        <pre id="clientsOutput"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>Comptes</h2>
+        <button id="loadComptes">Charger les comptes</button>
+        <pre id="comptesOutput"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>Résultats Recherche</h2>
+        <pre id="searchOutput"></pre>
+      </section>
+    </main>
+
+    <script>
+      const clientsOutput = document.getElementById("clientsOutput");
+      const comptesOutput = document.getElementById("comptesOutput");
+      const searchOutput = document.getElementById("searchOutput");
+
+      async function fetchJson(url, options = {}) {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || "Request failed");
+        }
+        return response.json();
+      }
+
+      document.getElementById("loadClients").addEventListener("click", async () => {
+        try {
+          const data = await fetchJson("/api/clients");
+          clientsOutput.textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          clientsOutput.textContent = error.message;
+        }
+      });
+
+      document.getElementById("loadComptes").addEventListener("click", async () => {
+        try {
+          const data = await fetchJson("/api/comptes");
+          comptesOutput.textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          comptesOutput.textContent = error.message;
+        }
+      });
+
+      document.getElementById("searchForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const kind = document.getElementById("kind").value;
+        const term = document.getElementById("term").value;
+
+        try {
+          const data = await fetchJson("/api/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kind, term }),
+          });
+          searchOutput.textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          searchOutput.textContent = error.message;
+        }
+      });
+    </script>
+  </body>
+</html>
