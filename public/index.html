@@ -1,102 +1,92 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
     <title>Dashboard Banque - Lab</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
     <main class="layout">
-      <section class="panel hero">
-        <h1>Dashboard Banque</h1>
-        <p>Visualisation des clients et des comptes depuis l'API.</p>
-      </section>
+        <section class="panel hero">
+            <h1>Dashboard Banque</h1>
+            <p>Laboratoire de test : Injections SQL et RBAC.</p>
+        </section>
 
-      <section class="panel">
-        <h2>Recherche</h2>
-        <form id="searchForm" class="search-form">
-          <label>
-            Type
-            <select id="kind" required>
-              <option value="client">Client</option>
-              <option value="compte">Compte</option>
-            </select>
-          </label>
-          <label>
-            Valeur
-            <input id="term" type="text" placeholder="Ex: Dupont ou courant" required />
-          </label>
-          <button type="submit">Rechercher</button>
-        </form>
-      </section>
+        <section class="panel">
+            <h2>Recherche (Injection SQL)</h2>
+            <form id="searchForm" class="search-form">
+                <label>Type <select id="kind"><option value="client">Client</option><option value="compte">Compte</option></select></label>
+                <label>Valeur <input id="term" type="text" placeholder="Ex: ' OR 1=1 --"></label>
+                <button type="submit">Rechercher</button>
+            </form>
+            <pre id="searchOutput"></pre>
+        </section>
 
-      <section class="panel">
-        <h2>Clients</h2>
-        <button id="loadClients">Charger les clients</button>
-        <pre id="clientsOutput"></pre>
-      </section>
+        <section class="panel">
+            <h2>Console SQL Brute</h2>
+            <form id="consoleForm" class="search-form">
+                <label>Requête <textarea id="sqlQuery" placeholder="SELECT * FROM clients;"></textarea></label>
+                <button type="submit" style="background: #e11d48;">Exécuter</button>
+            </form>
+            <pre id="consoleOutput"></pre>
+        </section>
 
-      <section class="panel">
-        <h2>Comptes</h2>
-        <button id="loadComptes">Charger les comptes</button>
-        <pre id="comptesOutput"></pre>
-      </section>
-
-      <section class="panel">
-        <h2>Résultats Recherche</h2>
-        <pre id="searchOutput"></pre>
-      </section>
+        <section class="panel">
+            <h2>Actions Rapides</h2>
+            <button id="loadClients">Charger Clients</button>
+            <button id="loadComptes">Charger Comptes</button>
+            <pre id="dataOutput">Cliquez sur un bouton...</pre>
+        </section>
     </main>
 
     <script>
-      const clientsOutput = document.getElementById("clientsOutput");
-      const comptesOutput = document.getElementById("comptesOutput");
-      const searchOutput = document.getElementById("searchOutput");
-
-      async function fetchJson(url, options = {}) {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(text || "Request failed");
+        // FIX : Lecture du stream une seule fois
+        async function fetchJson(url, options = {}) {
+            const response = await fetch(url, options);
+            const rawText = await response.text(); 
+            if (!response.ok) {
+                try {
+                    const errObj = JSON.parse(rawText);
+                    throw new Error(errObj.error || "Erreur");
+                } catch(e) { throw new Error(rawText); }
+            }
+            return JSON.parse(rawText);
         }
-        return response.json();
-      }
 
-      document.getElementById("loadClients").addEventListener("click", async () => {
-        try {
-          const data = await fetchJson("/api/clients");
-          clientsOutput.textContent = JSON.stringify(data, null, 2);
-        } catch (error) {
-          clientsOutput.textContent = error.message;
-        }
-      });
+        document.getElementById("searchForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const output = document.getElementById("searchOutput");
+            try {
+                const data = await fetchJson("/api/search", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ kind: document.getElementById("kind").value, term: document.getElementById("term").value })
+                });
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch(err) { output.textContent = "ERREUR : " + err.message; }
+        });
 
-      document.getElementById("loadComptes").addEventListener("click", async () => {
-        try {
-          const data = await fetchJson("/api/comptes");
-          comptesOutput.textContent = JSON.stringify(data, null, 2);
-        } catch (error) {
-          comptesOutput.textContent = error.message;
-        }
-      });
+        document.getElementById("consoleForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const output = document.getElementById("consoleOutput");
+            try {
+                const data = await fetchJson("/api/execute", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ query: document.getElementById("sqlQuery").value })
+                });
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch(err) { output.textContent = "ERREUR : " + err.message; }
+        });
 
-      document.getElementById("searchForm").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const kind = document.getElementById("kind").value;
-        const term = document.getElementById("term").value;
-
-        try {
-          const data = await fetchJson("/api/search", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ kind, term }),
-          });
-          searchOutput.textContent = JSON.stringify(data, null, 2);
-        } catch (error) {
-          searchOutput.textContent = error.message;
-        }
-      });
+        document.getElementById("loadClients").onclick = async () => {
+            const d = await fetchJson("/api/clients");
+            document.getElementById("dataOutput").textContent = JSON.stringify(d, null, 2);
+        };
+        document.getElementById("loadComptes").onclick = async () => {
+            const d = await fetchJson("/api/comptes");
+            document.getElementById("dataOutput").textContent = JSON.stringify(d, null, 2);
+        };
     </script>
-  </body>
+</body>
 </html>

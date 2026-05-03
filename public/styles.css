@@ -62,11 +62,17 @@ label {
 
 input,
 select,
+textarea,
 button {
   font: inherit;
   border-radius: 10px;
   border: 1px solid var(--border);
   padding: 10px 12px;
+}
+
+textarea {
+  resize: vertical;
+  font-family: monospace; /* Plus pratique pour taper du SQL */
 }
 
 button {
