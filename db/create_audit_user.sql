@@ -2,9 +2,10 @@
 -- Run as a DBA on the postgres database (e.g., psql -U postgres -d postgres)
 -- Replace 'audit_pw_here' with a secure password stored safely (or use a secret manager)
 
+-- For local lab use we set a temporary audit password. Change for production.
 CREATE ROLE audit_user
   LOGIN
-  PASSWORD 'audit_pw_here'
+  PASSWORD 'audit_local_pw'
   NOSUPERUSER
   NOCREATEDB
   NOCREATEROLE

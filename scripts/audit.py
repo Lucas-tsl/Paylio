@@ -12,7 +12,7 @@ DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = int(os.getenv("DB_PORT", 5434))
 DB_NAME = os.getenv("DB_NAME", "security_db")
 DB_USER = os.getenv("AUDIT_DB_USER", "audit_user")
-DB_PASSWORD = os.getenv("AUDIT_DB_PASSWORD", "audit_pw_here")
+DB_PASSWORD = os.getenv("AUDIT_DB_PASSWORD", "audit_local_pw")
 
 
 def get_audit_logs(limit=100):

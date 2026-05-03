@@ -21,6 +21,13 @@ CREATE TABLE comptes (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- Users table for authentication testing (password_hash should store bcrypt hashes)
+CREATE TABLE IF NOT EXISTS users (
+  login VARCHAR(100) PRIMARY KEY,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 INSERT INTO clients (nom, prenom, email, telephone) VALUES
   ('Dupont', 'Alice', 'alice.dupont@example.com', '+33611111111'),
   ('Martin', 'Bruno', 'bruno.martin@example.com', '+33622222222'),
